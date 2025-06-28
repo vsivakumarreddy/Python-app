@@ -6,12 +6,12 @@ pipeline {
         TAG = '1'
     }
 
-    stages {
-        stage('Checkout') {
-            steps {
-                git url: 'https://github.com/sripriya7-ande/Python-app.git'
-            }
-        }
+    stage('Checkout') {
+    steps {
+        git url: 'https://github.com/sripriya7-ande/Python-app.git', branch: 'main'
+    }
+}
+
 
         stage('Build Docker Image') {
             steps {
