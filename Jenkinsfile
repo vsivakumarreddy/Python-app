@@ -1,42 +1,42 @@
 pipeline {
-   agent any
+    agent any
 
-   environment {
-       DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
-       IMAGE_NAME = "81429444/pythonapp"
-   }
+    environment {
+        IMAGE_NAME = '81429444/pythonapp'
+        TAG = '1'
+    }
 
-   stages {
-       stage('Build Docker Image') {
-           steps {
-               sh 'docker build -t $IMAGE_NAME:$BUILD_NUMBER .'
-           }
-       }
+    stages {
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/sripriya7-ande/Python-app.git'
+            }
+        }
 
-       stage('Login to DockerHub') {
-           steps {
-               sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
-           }
-       }
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $IMAGE_NAME:$TAG .'
+            }
+        }
 
-       stage('Push Docker Image') {
-           steps {
-               sh 'docker push $IMAGE_NAME:$BUILD_NUMBER'
-           }
-       }
-   }
+        stage('Login to DockerHub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                }
+            }
+        }
 
-   post {
-       always {
-           sh 'docker logout'
-       }
+        stage('Push Docker Image') {
+            steps {
+                sh 'docker push $IMAGE_NAME:$TAG'
+            }
+        }
+    }
 
-       success {
-           slackSend message: ":white_check_mark: Build and Push Success: *${env.JOB_NAME}* #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
-       }
-
-       failure {
-           slackSend message: ":x: Build Failed: *${env.JOB_NAME}* #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
-       }
-   }
+    post {
+        always {
+            sh 'docker logout'
+        }
+    }
 }
